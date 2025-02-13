@@ -1,0 +1,151 @@
+
+
+
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Parking Lot Design</title>
+    <script src="https://aframe.io/releases/1.4.1/aframe.min.js"></script>
+     <!-- <script src="./aframe.min.js"></script> -->
+     <style>
+      .justTestingColors{
+        color: #f0ffff; 
+
+      }
+     </style>
+  </head>
+  <body>
+    <a-scene>
+      <!-- Big green land -->
+      <a-plane 
+        color="green" 
+        width="80" 
+        height="120" 
+        rotation="-90 0 0">
+      </a-plane>
+      
+      <!-- Huge rectangle of pavement -->
+      <a-plane 
+        color="#808080" 
+        width="60" 
+        height="86" 
+        rotation="-90 0 0" 
+        position="0 0.05 0">
+      </a-plane>
+
+      <!-- 
+           Coordinate letters
+      -->
+      <a-text value="N" 
+              position="0 2 -48" 
+              align="center" 
+              color="black" 
+              scale="15 15 15">
+      </a-text>
+      
+      <a-text value="S" 
+              position="0 2 48" 
+              align="center" 
+              color="black" 
+              scale="15 15 15">
+      </a-text>
+      
+      <a-text value="E" 
+              position="35 2 0" 
+              align="center" 
+              color="black" 
+              scale="15 15 15">
+      </a-text>
+      
+      <a-text value="W/O" 
+              position="-35 2 0" 
+              align="center" 
+              color="black" 
+              scale="15 15 15">
+      </a-text>
+
+
+      <!-- A camera so you can view the layout from above -->
+      <a-entity position="0 20 88">
+      <!-- <a-entity position="0 60 60" rotation="-55 0 0"> -->
+        <a-camera></a-camera>
+      </a-entity>
+
+      <!-- A sky for a simple background -->
+      <a-sky color="#f0ffff"></a-sky>
+
+    </a-scene>
+
+
+    <script>
+      // Parameters for the parking spots
+      const spotWidth = 10;    // horizontal dimension (x-axis)
+      const spotHeight = 5;    // vertical dimension (z-axis)
+      
+      const rows = 12;         // 12 rows
+      const cols = 4;          // 4 columns (total 48 spots)
+      
+      // Define extra spacing:
+      const rowGap = 1;        // extra gap between rows
+      const colGap = 9;        // gap between outer and inner columns
+      const centerGap = 2;     // additional gap between the two center columns
+
+      // Parking block properties
+      const blockSeparation = 1.2;  // Distance from the road edge
+      const blockWidth = 0.5;         // Length of the block
+      const blockHeight = 0.5;      // Height of the block
+      const blockDepth = 3;         // Thickness of the block
+      const blockOffset = 4.5; // Position at the right edge of the spot
+      
+      // Vertical spacing along z:
+      const totalRowSpacing = spotHeight + rowGap;
+      // Center the rows along the pavement:
+      const startZ = -((rows * totalRowSpacing) / 2) + (spotHeight / 2);
+      
+      // Horizontal positioning (x-axis):
+      // To add a gap between the center columns, we calculate their centers such that
+      // the distance between them equals spotWidth + centerGap.
+      const innerLeft = -((spotWidth + centerGap) / 2);  // For example: -(10+2)/2 = -6
+      const innerRight = ((spotWidth + centerGap) / 2);    // For example: 6
+      // Outer columns are offset further by (spotWidth + colGap)
+      const outerLeft = innerLeft - (spotWidth + colGap);    // For example: -6 - (10+9) = -25
+      const outerRight = innerRight + (spotWidth + colGap);    // For example: 6 + (10+9) = 25
+      
+      const columnX = [ outerLeft, innerLeft, innerRight, outerRight ]; // [-25, -6, 6, 25]
+      
+      // Reference to the scene
+      const sceneEl = document.querySelector('a-scene');
+      
+      // Create the 48 parking spots as horizontal rectangles
+      for (let i = 0; i < rows; i++) {
+        const zPos = startZ + i * totalRowSpacing;
+        for (let j = 0; j < cols; j++) {
+          const xPos = columnX[j];
+          const spot = document.createElement('a-plane');
+
+          spot.setAttribute('color', '#696969');  // slightly darker than pavement
+          spot.setAttribute('width', spotWidth);
+          spot.setAttribute('height', spotHeight);
+          spot.setAttribute('rotation', '-90 0 0');
+          // Place the spot slightly above the pavement (pavement is at y=0.05)
+          spot.setAttribute('position', { x: xPos, y: 0.06, z: zPos });
+          sceneEl.appendChild(spot);
+
+          // Alternate stop pad position: Left for even columns, Right for odd columns
+      const stopPadX = (j % 2 === 0) ? xPos - blockOffset : xPos + blockOffset;
+
+// Stop Pad (Yellow Bar)
+const stopPad = document.createElement('a-box');
+stopPad.setAttribute('color', 'yellow');
+stopPad.setAttribute('width', blockWidth);
+stopPad.setAttribute('height', blockHeight);
+stopPad.setAttribute('depth', blockDepth);
+stopPad.setAttribute('position', { x: stopPadX, y: blockHeight / 2, z: zPos });
+sceneEl.appendChild(stopPad);
+        }
+      }
+    </script>
+  </body>
+</html>
