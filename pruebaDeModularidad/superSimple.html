@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Main House Scene (Components Example)</title>
+    <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+    <script>
+        // ------------------ Kitchen Component ------------------
+        AFRAME.registerComponent('kitchen', {
+            init: function () {
+                const kitchenEl = document.createElement('a-entity');
+
+                kitchenEl.innerHTML = `
+                    <a-sky color="#ECF0F1"></a-sky>
+                    <a-plane color="#D35400" width="10" height="10" rotation="-90 0 0"></a-plane>
+                    <a-box color="#BDC3C7" width="4" height="0.8" depth="1" position="0 0.4 0"></a-box>
+                    <a-box color="#3498DB" width="0.5" height="0.3" depth="0.5" position="-1.5 0.7 0.2"></a-box>
+                    <a-box color="#7F8C8D" width="1" height="2" depth="1" position="2 1 0"></a-box>
+                    <a-entity light="type: ambient; color: #FFFFFF; intensity: 0.5"></a-entity>
+                    <a-entity light="type: point; color: #FFFFFF; intensity: 0.8; position: 0 3 0"></a-entity>
+                `;
+                this.el.appendChild(kitchenEl); // Add kitchen entities to the entity this component is attached to
+            }
+        });
+
+        // ------------------ Bedroom Component ------------------
+        AFRAME.registerComponent('bedroom', {
+            init: function () {
+                const bedroomEl = document.createElement('a-entity');
+                bedroomEl.innerHTML = `
+                    <a-sky color="#E0F7FA"></a-sky>
+                    <a-plane color="#A0522D" width="10" height="10" rotation="-90 0 0"></a-plane>
+                    <a-box color="#FAD7A0" width="2" height="0.5" depth="3" position="0 0.25 -1"></a-box>
+                    <a-box color="#FFFFFF" width="2" height="0.3" depth="3" position="0 0.6 -1"></a-box>
+                    <a-box color="#95A5A6" width="0.5" height="1" depth="0.5" position="1.2 0.5 0.5"></a-box>
+                    <a-entity light="type: ambient; color: #FFFFFF; intensity: 0.5"></a-entity>
+                    <a-entity light="type: point; color: #FFFFFF; intensity: 0.8; position: 0 3 0"></a-entity>
+                `;
+                this.el.appendChild(bedroomEl);
+            }
+        });
+
+        // ------------------ Shower Component ------------------
+        AFRAME.registerComponent('shower', {
+            init: function () {
+                const showerEl = document.createElement('a-entity');
+                showerEl.innerHTML = `
+                    <a-sky color="#B2EBF2"></a-sky>
+                    <a-plane color="#EEEEEE" width="5" height="5" rotation="-90 0 0"></a-plane>
+                    <a-box color="#FFFFFF" width="5" height="3" depth="0.1" position="0 1.5 -2.5"></a-box>
+                    <a-box color="#FFFFFF" width="0.1" height="3" depth="5" position="2.5 1.5 0"></a-box>
+                    <a-box color="#FFFFFF" width="0.1" height="3" depth="5" position="-2.5 1.5 0"></a-box>
+                    <a-cylinder color="#757575" radius="0.1" height="0.5" position="0 2.8 -2.4"></a-cylinder>
+                    <a-plane color="#E0E0E0" width="4.8" height="4.8" rotation="-90 0 0" position="0 0.01 0"></a-plane>
+                    <a-entity light="type: ambient; color: #FFFFFF; intensity: 0.5"></a-entity>
+                    <a-entity light="type: point; color: #FFFFFF; intensity: 0.8; position: 0 3 0"></a-entity>
+                `;
+                this.el.appendChild(showerEl);
+            }
+        });
+
+
+    </script>
+</head>
+<body>
+
+    <a-scene>
+        <a-sky color="#ADD8E6"></a-sky>
+        <a-plane color="#9CCC65" width="50" height="50" rotation="-90 0 0"></a-plane>
+
+        <a-entity kitchen position="-10 0 0"></a-entity>  <a-entity bedroom position="10 0 0"></a-entity>  <a-entity shower position="0 0 -10"></a-entity>   <a-entity light="type: ambient; color: #FFFFFF; intensity: 0.6"></a-entity>
+        <a-entity light="type: directional; color: #FFFFFF; intensity: 0.8; position: 1 1 1"></a-entity>
+
+        <a-entity camera look-controls wasd-controls position="0 2 20"></a-entity>
+
+    </a-scene>
+
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>A-Frame Main Scene with House</title>
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script>
+    // Component to handle loading the house scene
+    AFRAME.registerComponent('scene-loader', {
+      init: function() {
+        // Create iframe to load the house scene
+        const houseContainer = document.getElementById('house-container');
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('src', './house3.html');
+        iframe.setAttribute('width', '100%');
+        iframe.setAttribute('height', '100%');
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('allowvr', '');
+        
+        houseContainer.appendChild(iframe);
+      }
+    });
+  </script>
+  <style>
+    body { margin: 0; }
+    #house-container {
+      position: absolute;
+      width: 40%;
+      height: 40%;
+      top: 30%;
+      left: 30%;
+      border: 2px solid #fff;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <a-scene scene-loader>
+    <!-- Main scene with just a ground plane and basic lighting -->
+    <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" color="#7BC8A4"></a-plane>
+    
+    <!-- Simple environment -->
+    <a-sky color="#87CEEB"></a-sky>
+    
+    <!-- Basic lighting -->
+    <a-entity light="type: ambient; intensity: 0.5;"></a-entity>
+    <a-entity light="type: directional; intensity: 0.8; castShadow: true" position="-1 1 1"></a-entity>
+    
+    <!-- Camera -->
+    <a-entity position="0 1.6 5">
+      <a-camera></a-camera>
+    </a-entity>
+    
+    <!-- Container for house scene -->
+    <div id="house-container"></div>
+  </a-scene>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>A-Frame Main Scene with External Scenes</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aframe/1.4.2/aframe.min.js"></script>
+  <script>
+    // Component to handle scene loading and asset management
+    AFRAME.registerComponent('scene-manager', {
+      init: function() {
+        this.loadedScenes = {};
+        this.currentScene = null;
+        
+        // Register event listeners for scene buttons
+        document.getElementById('kitchen-btn').addEventListener('click', () => this.loadScene('kitchen2'));
+        document.getElementById('bedroom-btn').addEventListener('click', () => this.loadScene('bedroom'));
+        document.getElementById('shower-btn').addEventListener('click', () => this.loadScene('shower'));
+      },
+      
+      loadScene: function(sceneName) {
+        const sceneContainer = document.getElementById('external-scene-container');
+        
+        // Clear current scene
+        while (sceneContainer.firstChild) {
+          sceneContainer.removeChild(sceneContainer.firstChild);
+        }
+        
+        // Create iframe to load the external scene
+        const iframe = document.createElement('iframe');
+        iframe.setAttribute('src', `${sceneName}.html`);
+        iframe.setAttribute('width', '100%');
+        iframe.setAttribute('height', '100%');
+        iframe.setAttribute('frameborder', '0');
+        iframe.setAttribute('allowfullscreen', '');
+        iframe.setAttribute('allowvr', '');
+        
+        sceneContainer.appendChild(iframe);
+        this.currentScene = sceneName;
+        
+        // Update button states
+        document.querySelectorAll('.scene-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.getElementById(`${sceneName}-btn`).classList.add('active');
+      }
+    });
+  </script>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    .scene-controls {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 100;
+      display: flex;
+      gap: 10px;
+    }
+    .scene-btn {
+      padding: 10px 15px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .scene-btn.active {
+      background: rgba(0,100,255,0.7);
+    }
+    #external-scene-container {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      top: 25%;
+      left: 25%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+  </style>
+</head>
+<body>
+  <a-scene scene-manager>
+    <a-assets>
+      <img id="sky" src="https://cdn.glitch.global/de9c6348-10f1-4fea-8b43-89b19bafece6/sky.jpg?v=1661799536412" crossorigin="anonymous">
+    </a-assets>
+    
+    <!-- Main scene environment -->
+    <a-sky src="#sky" rotation="0 -90 0"></a-sky>
+    <a-plane position="0 0 0" rotation="-90 0 0" width="50" height="50" color="#7BC8A4"></a-plane>
+    
+    <!-- Airplane model -->
+    <a-entity position="0 1 -5">
+      <a-cone color="#FF5722" position="0 0 -1" radius-bottom="0.1" radius-top="0.4" height="2" rotation="90 0 0"></a-cone>
+      <a-box color="#FFFFFF" position="0 0 0" depth="4" height="0.5" width="0.5"></a-box>
+      <a-entity position="0 0 1">
+        <a-box color="#FFFFFF" position="0 0 0.5" depth="1" height="0.2" width="5"></a-box>
+      </a-entity>
+      <a-entity position="0 0.5 0">
+        <a-box color="#FFFFFF" position="0 0.5 0" depth="1" height="1" width="0.2"></a-box>
+      </a-entity>
+    </a-entity>
+    
+    <!-- Camera -->
+    <a-entity position="0 1.6 5">
+      <a-camera></a-camera>
+    </a-entity>
+    
+    <!-- Container for external scenes -->
+    <div id="external-scene-container"></div>
+  </a-scene>
+
+  <!-- Scene controls -->
+  <div class="scene-controls">
+    <button id="kitchen-btn" class="scene-btn">Kitchen Scene</button>
+    <button id="bedroom-btn" class="scene-btn">Bedroom Scene</button>
+    <button id="shower-btn" class="scene-btn">Shower Scene</button>
+  </div>
+</body>
+</html>
