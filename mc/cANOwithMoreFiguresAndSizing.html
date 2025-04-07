@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>A-Frame Builder</title>
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <style>
+        .instructions {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h3>Controls:</h3>
+        <p>Movement: W (forward), A (left), S (backward), D (right)</p>
+        <p>Vertical: Q (down), E (up)</p>
+        <p>N: Create new object at previous location</p>
+        <p>M: Cycle through shapes (box, sphere, cone, cylinder)</p>
+        <p>Object Movement: J (left), I (forward), L (right), K (backward)</p>
+        <p>Object Height: U (down), O (up)</p>
+        <p>Object Sizing: T/Z (width ±), G/H (height ±), V/B (depth ±)</p>
+    </div>
+
+    <a-scene>
+        <a-entity id="camera" position="0 1.6 5" camera look-controls>
+            <a-entity cursor="fuse: false" position="0 0 -1"
+                      geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.02"
+                      material="color: white; shader: flat"></a-entity>
+        </a-entity>
+
+        <!-- Environment -->
+        <a-grid id="ground" width="100" height="100" color="#666666"></a-grid>
+        <a-sky color="#6EBEFF"></a-sky>
+        
+        <!-- Lighting -->
+        <a-entity light="type: ambient; color: #BBB"></a-entity>
+        <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-0.5 1 1"></a-entity>
+    </a-scene>
+
+    <script>
+        // Variables
+        let activeObject = null;
+        let objectCount = 0;
+        const MOVEMENT_SPEED = 0.1;
+        const OBJECT_MOVEMENT_SPEED = 0.1;
+        const SIZE_CHANGE_AMOUNT = 0.1;
+        const SHAPES = ['box', 'sphere', 'cone', 'cylinder'];
+        let currentShapeIndex = 0;
+
+        // Default position and dimensions for the first object
+        const defaultPosition = {x: 0, y: 0.5, z: 0};
+        const defaultDimensions = {width: 1, height: 1, depth: 1, radius: 0.5, 'radius-bottom': 0.5, 'radius-top': 0};
+
+        // Key state tracking
+        const keys = {
+            w: false, a: false, s: false, d: false,
+            q: false, e: false, n: false, m: false,
+            j: false, i: false, l: false, k: false,
+            u: false, o: false,
+            t: false, z: false, 
+            g: false, h: false, 
+            v: false, b: false
+        };
+
+        // Set up key event listeners
+        document.addEventListener('keydown', (event) => {
+            const key = event.key.toLowerCase();
+            if (key in keys) {
+                keys[key] = true;
+                
+                // Handle one-time key presses
+                if (key === 'n') {
+                    createNewObject();
+                    keys[key] = false;
+                } else if (key === 'm') {
+                    cycleShape();
+                    keys[key] = false;
+                }
+            }
+        });
+
+        document.addEventListener('keyup', (event) => {
+            const key = event.key.toLowerCase();
+            if (key in keys) {
+                keys[key] = false;
+            }
+        });
+
+        // Create a new object
+        function createNewObject() {
+            let startPosition = {...defaultPosition};
+            let dimensions = {...defaultDimensions};
+            
+            // If there's an active object already, use its position and deactivate it
+            if (activeObject) {
+                // Get position from active object
+                const currentPos = activeObject.getAttribute('position');
+                startPosition = {x: currentPos.x, y: currentPos.y, z: currentPos.z};
+                
+                // Try to get dimensions from active object based on its shape
+                const currentShape = SHAPES[currentShapeIndex];
+                if (currentShape === 'box') {
+                    dimensions.width = activeObject.getAttribute('width') || dimensions.width;
+                    dimensions.height = activeObject.getAttribute('height') || dimensions.height;
+                    dimensions.depth = activeObject.getAttribute('depth') || dimensions.depth;
+                } else if (currentShape === 'sphere') {
+                    dimensions.radius = activeObject.getAttribute('radius') || dimensions.radius;
+                } else if (currentShape === 'cylinder') {
+                    dimensions.radius = activeObject.getAttribute('radius') || dimensions.radius;
+                    dimensions.height = activeObject.getAttribute('height') || dimensions.height;
+                } else if (currentShape === 'cone') {
+                    dimensions['radius-bottom'] = activeObject.getAttribute('radius-bottom') || dimensions['radius-bottom'];
+                    dimensions.height = activeObject.getAttribute('height') || dimensions.height;
+                }
+                
+                // Change color to indicate it's no longer active
+                activeObject.setAttribute('material', 'color', '#4CC3D9');
+            }
+
+            objectCount++;
+            const currentShape = SHAPES[currentShapeIndex];
+            const newObject = document.createElement(`a-${currentShape}`);
+            newObject.setAttribute('id', `object-${objectCount}`);
+            newObject.setAttribute('position', `${startPosition.x} ${startPosition.y} ${startPosition.z}`);
+            newObject.setAttribute('material', 'color', '#FF6B6B');  // Active object color
+            
+            // Set dimensions based on shape
+            if (currentShape === 'box') {
+                newObject.setAttribute('width', dimensions.width);
+                newObject.setAttribute('height', dimensions.height);
+                newObject.setAttribute('depth', dimensions.depth);
+            } else if (currentShape === 'sphere') {
+                newObject.setAttribute('radius', dimensions.radius);
+            } else if (currentShape === 'cylinder') {
+                newObject.setAttribute('radius', dimensions.radius);
+                newObject.setAttribute('height', dimensions.height);
+            } else if (currentShape === 'cone') {
+                newObject.setAttribute('radius-bottom', dimensions['radius-bottom']);
+                newObject.setAttribute('radius-top', dimensions['radius-top']);
+                newObject.setAttribute('height', dimensions.height);
+            }
+            
+            document.querySelector('a-scene').appendChild(newObject);
+            activeObject = newObject;
+        }
+
+        // Cycle through shapes
+        function cycleShape() {
+            if (!activeObject) return;
+            
+            // Get current position and dimensions
+            const currentPos = activeObject.getAttribute('position');
+            let dimensions = {...defaultDimensions};
+            
+            // Try to preserve dimensions when possible
+            const currentElementType = activeObject.tagName.toLowerCase().substring(2); // Remove 'a-' prefix
+            if (currentElementType === 'box') {
+                dimensions.width = activeObject.getAttribute('width') || dimensions.width;
+                dimensions.height = activeObject.getAttribute('height') || dimensions.height;
+                dimensions.depth = activeObject.getAttribute('depth') || dimensions.depth;
+                // Update radius for sphere/cylinder based on average box dimensions
+                dimensions.radius = Math.min(dimensions.width, dimensions.depth) / 2;
+                dimensions['radius-bottom'] = dimensions.radius;
+            } else if (currentElementType === 'sphere') {
+                dimensions.radius = activeObject.getAttribute('radius') || dimensions.radius;
+                // Update box dimensions based on sphere
+                dimensions.width = dimensions.height = dimensions.depth = dimensions.radius * 2;
+                dimensions['radius-bottom'] = dimensions.radius;
+            } else if (currentElementType === 'cylinder') {
+                dimensions.radius = activeObject.getAttribute('radius') || dimensions.radius;
+                dimensions.height = activeObject.getAttribute('height') || dimensions.height;
+                // Update box dimensions
+                dimensions.width = dimensions.depth = dimensions.radius * 2;
+                dimensions['radius-bottom'] = dimensions.radius;
+            } else if (currentElementType === 'cone') {
+                dimensions['radius-bottom'] = activeObject.getAttribute('radius-bottom') || dimensions['radius-bottom'];
+                dimensions.height = activeObject.getAttribute('height') || dimensions.height;
+                // Update other dimensions
+                dimensions.width = dimensions.depth = dimensions['radius-bottom'] * 2;
+                dimensions.radius = dimensions['radius-bottom'];
+            }
+            
+            // Remove the old object
+            const scene = document.querySelector('a-scene');
+            scene.removeChild(activeObject);
+            
+            // Cycle to next shape
+            currentShapeIndex = (currentShapeIndex + 1) % SHAPES.length;
+            const newShape = SHAPES[currentShapeIndex];
+            
+            // Create new shape
+            const newObject = document.createElement(`a-${newShape}`);
+            newObject.setAttribute('id', activeObject.getAttribute('id'));
+            newObject.setAttribute('position', `${currentPos.x} ${currentPos.y} ${currentPos.z}`);
+            newObject.setAttribute('material', 'color', '#FF6B6B');
+            
+            // Set dimensions based on new shape
+            if (newShape === 'box') {
+                newObject.setAttribute('width', dimensions.width);
+                newObject.setAttribute('height', dimensions.height);
+                newObject.setAttribute('depth', dimensions.depth);
+            } else if (newShape === 'sphere') {
+                newObject.setAttribute('radius', dimensions.radius);
+            } else if (newShape === 'cylinder') {
+                newObject.setAttribute('radius', dimensions.radius);
+                newObject.setAttribute('height', dimensions.height);
+            } else if (newShape === 'cone') {
+                newObject.setAttribute('radius-bottom', dimensions['radius-bottom']);
+                newObject.setAttribute('radius-top', dimensions['radius-top']);
+                newObject.setAttribute('height', dimensions.height);
+            }
+            
+            scene.appendChild(newObject);
+            activeObject = newObject;
+        }
+
+        // Game loop for continuous movements
+        function gameLoop() {
+            const camera = document.getElementById('camera');
+            const cameraPosition = camera.getAttribute('position');
+            const cameraRotation = camera.getAttribute('rotation');
+            
+            // Convert camera direction to radians for movement
+            const directionRad = cameraRotation.y * Math.PI / 180;
+            
+            // Camera movement
+            if (keys.w) {
+                cameraPosition.x -= Math.sin(directionRad) * MOVEMENT_SPEED;
+                cameraPosition.z -= Math.cos(directionRad) * MOVEMENT_SPEED;
+            }
+            if (keys.s) {
+                cameraPosition.x += Math.sin(directionRad) * MOVEMENT_SPEED;
+                cameraPosition.z += Math.cos(directionRad) * MOVEMENT_SPEED;
+            }
+            if (keys.a) {
+                cameraPosition.x -= Math.cos(directionRad) * MOVEMENT_SPEED;
+                cameraPosition.z += Math.sin(directionRad) * MOVEMENT_SPEED;
+            }
+            if (keys.d) {
+                cameraPosition.x += Math.cos(directionRad) * MOVEMENT_SPEED;
+                cameraPosition.z -= Math.sin(directionRad) * MOVEMENT_SPEED;
+            }
+            if (keys.q) {
+                cameraPosition.y -= MOVEMENT_SPEED;
+            }
+            if (keys.e) {
+                cameraPosition.y += MOVEMENT_SPEED;
+            }
+            
+            camera.setAttribute('position', cameraPosition);
+            
+            // Object movement and resizing
+            if (activeObject) {
+                const objPosition = activeObject.getAttribute('position');
+                
+                // Movement
+                if (keys.j) objPosition.x -= OBJECT_MOVEMENT_SPEED;
+                if (keys.l) objPosition.x += OBJECT_MOVEMENT_SPEED;
+                if (keys.i) objPosition.z -= OBJECT_MOVEMENT_SPEED;
+                if (keys.k) objPosition.z += OBJECT_MOVEMENT_SPEED;
+                if (keys.u) objPosition.y -= OBJECT_MOVEMENT_SPEED;
+                if (keys.o) objPosition.y += OBJECT_MOVEMENT_SPEED;
+                
+                activeObject.setAttribute('position', objPosition);
+                
+                // Resizing - depends on the current shape
+                const currentShape = activeObject.tagName.toLowerCase().substring(2); // Remove 'a-' prefix
+                
+                if (currentShape === 'box') {
+                    // Width (X-axis)
+                    if (keys.t) {
+                        const width = parseFloat(activeObject.getAttribute('width')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('width', width);
+                    }
+                    if (keys.z) {
+                        const width = Math.max(0.1, parseFloat(activeObject.getAttribute('width')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('width', width);
+                    }
+                    
+                    // Height (Y-axis)
+                    if (keys.g) {
+                        const height = parseFloat(activeObject.getAttribute('height')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('height', height);
+                    }
+                    if (keys.h) {
+                        const height = Math.max(0.1, parseFloat(activeObject.getAttribute('height')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('height', height);
+                    }
+                    
+                    // Depth (Z-axis)
+                    if (keys.v) {
+                        const depth = parseFloat(activeObject.getAttribute('depth')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('depth', depth);
+                    }
+                    if (keys.b) {
+                        const depth = Math.max(0.1, parseFloat(activeObject.getAttribute('depth')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('depth', depth);
+                    }
+                } else if (currentShape === 'sphere') {
+                    // For sphere, all size controls affect radius
+                    if (keys.t || keys.g || keys.v) {
+                        const radius = parseFloat(activeObject.getAttribute('radius')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('radius', radius);
+                    }
+                    if (keys.z || keys.h || keys.b) {
+                        const radius = Math.max(0.1, parseFloat(activeObject.getAttribute('radius')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('radius', radius);
+                    }
+                } else if (currentShape === 'cylinder') {
+                    // Width/Depth (X/Z-axis)
+                    if (keys.t || keys.v) {
+                        const radius = parseFloat(activeObject.getAttribute('radius')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('radius', radius);
+                    }
+                    if (keys.z || keys.b) {
+                        const radius = Math.max(0.1, parseFloat(activeObject.getAttribute('radius')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('radius', radius);
+                    }
+                    
+                    // Height (Y-axis)
+                    if (keys.g) {
+                        const height = parseFloat(activeObject.getAttribute('height')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('height', height);
+                    }
+                    if (keys.h) {
+                        const height = Math.max(0.1, parseFloat(activeObject.getAttribute('height')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('height', height);
+                    }
+                } else if (currentShape === 'cone') {
+                    // Width/Depth (X/Z-axis)
+                    if (keys.t || keys.v) {
+                        const radius = parseFloat(activeObject.getAttribute('radius-bottom')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('radius-bottom', radius);
+                    }
+                    if (keys.z || keys.b) {
+                        const radius = Math.max(0.1, parseFloat(activeObject.getAttribute('radius-bottom')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('radius-bottom', radius);
+                    }
+                    
+                    // Height (Y-axis)
+                    if (keys.g) {
+                        const height = parseFloat(activeObject.getAttribute('height')) + SIZE_CHANGE_AMOUNT;
+                        activeObject.setAttribute('height', height);
+                    }
+                    if (keys.h) {
+                        const height = Math.max(0.1, parseFloat(activeObject.getAttribute('height')) - SIZE_CHANGE_AMOUNT);
+                        activeObject.setAttribute('height', height);
+                    }
+                }
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start the game loop when the scene is loaded
+        document.querySelector('a-scene').addEventListener('loaded', function () {
+            gameLoop();
+        });
+    </script>
+</body>
+</html>
